@@ -17,7 +17,8 @@ class MeshtasticSender:
         device_path: str = None, 
         tcp_host: str = None, 
         tcp_port: int = 4403,
-        connection_type: str = "serial"
+        connection_type: str = "serial",
+        channel_index: int = 0
     ):
         """
         Initialize Meshtastic sender
@@ -27,11 +28,13 @@ class MeshtasticSender:
             tcp_host: Optional hostname or IP address for TCP connection
             tcp_port: TCP port number (default: 4403)
             connection_type: Connection type - "serial" or "tcp" (default: "serial")
+            channel_index: Channel index to send messages on (default: 0)
         """
         self.device_path = device_path
         self.tcp_host = tcp_host
         self.tcp_port = tcp_port
         self.connection_type = connection_type
+        self.channel_index = channel_index
         self.interface = None
         
         # TODO: Initialize meshtastic interface based on connection type
@@ -43,21 +46,23 @@ class MeshtasticSender:
         #     # Default to auto-discovery
         #     self.interface = meshtastic.SerialInterface()
     
-    def send_message(self, message: str) -> bool:
+    def send_message(self, message: str, channel_index: Optional[int] = None) -> bool:
         """
         Send a message to the Meshtastic network
         
         Args:
             message: Text message to send
+            channel_index: Optional channel index to override default channel
             
         Returns:
             True if successful, False otherwise
         """
         try:
-            logger.info(f"Sending message: {message[:50]}...")
+            channel = channel_index if channel_index is not None else self.channel_index
+            logger.info(f"Sending message on channel {channel}: {message[:50]}...")
             
             # TODO: Implement actual Meshtastic sending
-            # self.interface.sendText(message)
+            # self.interface.sendText(message, channelIndex=channel)
             
             logger.info("Message sent successfully")
             return True

@@ -30,14 +30,16 @@ def main():
         device_path = os.getenv("MESHTASTIC_DEVICE_PATH")
         tcp_host = os.getenv("MESHTASTIC_TCP_HOST")
         tcp_port = int(os.getenv("MESHTASTIC_TCP_PORT", "4403"))
+        channel_index = int(os.getenv("MESHTASTIC_CHANNEL_INDEX", "0"))
         
         # Initialize Meshtastic sender
-        logger.info(f"Initializing Meshtastic with {connection_type} connection")
+        logger.info(f"Initializing Meshtastic with {connection_type} connection on channel {channel_index}")
         mesh_sender = MeshtasticSender(
             device_path=device_path,
             tcp_host=tcp_host,
             tcp_port=tcp_port,
-            connection_type=connection_type
+            connection_type=connection_type,
+            channel_index=channel_index
         )
         
         # Fetch data from ADOT API

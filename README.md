@@ -38,6 +38,11 @@ MESHTASTIC_TCP_HOST=192.168.1.100
 MESHTASTIC_TCP_PORT=4403  # Default port is 4403
 ```
 
+#### Channel Configuration
+```bash
+MESHTASTIC_CHANNEL_INDEX=0  # Default is 0 (primary channel)
+```
+
 ### ADOT API Configuration
 Add your ADOT API credentials as needed.
 
