@@ -21,7 +21,25 @@ This project provides scripts to:
 
 ## Configuration
 
-Create a `config.json` file with your ADOT API key and Meshtastic connection details.
+Configure the application using environment variables. You can create a `.env` file in the project root:
+
+### Meshtastic Connection Options
+
+#### Serial Connection (Default)
+```bash
+MESHTASTIC_CONNECTION_TYPE=serial
+MESHTASTIC_DEVICE_PATH=COM3  # Windows: COM3, Linux: /dev/ttyUSB0
+```
+
+#### TCP Connection
+```bash
+MESHTASTIC_CONNECTION_TYPE=tcp
+MESHTASTIC_TCP_HOST=192.168.1.100
+MESHTASTIC_TCP_PORT=4403  # Default port is 4403
+```
+
+### ADOT API Configuration
+Add your ADOT API credentials as needed.
 
 ## Usage
 

@@ -4,6 +4,7 @@ Main entry point for the application
 """
 
 import logging
+import os
 from adot_client import ADOTClient
 from meshtastic_sender import MeshtasticSender
 
@@ -24,8 +25,20 @@ def main():
         # Initialize ADOT API client
         adot_client = ADOTClient()
         
+        # Get Meshtastic connection settings from environment variables
+        connection_type = os.getenv("MESHTASTIC_CONNECTION_TYPE", "serial")
+        device_path = os.getenv("MESHTASTIC_DEVICE_PATH")
+        tcp_host = os.getenv("MESHTASTIC_TCP_HOST")
+        tcp_port = int(os.getenv("MESHTASTIC_TCP_PORT", "4403"))
+        
         # Initialize Meshtastic sender
-        mesh_sender = MeshtasticSender()
+        logger.info(f"Initializing Meshtastic with {connection_type} connection")
+        mesh_sender = MeshtasticSender(
+            device_path=device_path,
+            tcp_host=tcp_host,
+            tcp_port=tcp_port,
+            connection_type=connection_type
+        )
         
         # Fetch data from ADOT API
         logger.info("Fetching data from ADOT 511 API...")

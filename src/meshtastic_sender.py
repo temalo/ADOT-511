@@ -4,7 +4,7 @@ Handles sending messages to Meshtastic mesh network devices
 """
 
 import logging
-from typing import List, Dict
+from typing import List, Dict, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -12,18 +12,36 @@ logger = logging.getLogger(__name__)
 class MeshtasticSender:
     """Client for sending messages to Meshtastic devices"""
     
-    def __init__(self, device_path: str = None):
+    def __init__(
+        self, 
+        device_path: str = None, 
+        tcp_host: str = None, 
+        tcp_port: int = 4403,
+        connection_type: str = "serial"
+    ):
         """
         Initialize Meshtastic sender
         
         Args:
             device_path: Optional path to Meshtastic device (e.g., COM port or /dev/ttyUSB0)
+            tcp_host: Optional hostname or IP address for TCP connection
+            tcp_port: TCP port number (default: 4403)
+            connection_type: Connection type - "serial" or "tcp" (default: "serial")
         """
         self.device_path = device_path
+        self.tcp_host = tcp_host
+        self.tcp_port = tcp_port
+        self.connection_type = connection_type
         self.interface = None
         
-        # TODO: Initialize meshtastic interface
-        # self.interface = meshtastic.SerialInterface(device_path)
+        # TODO: Initialize meshtastic interface based on connection type
+        # if connection_type == "tcp" and tcp_host:
+        #     self.interface = meshtastic.TCPInterface(hostname=tcp_host, portNumber=tcp_port)
+        # elif connection_type == "serial" and device_path:
+        #     self.interface = meshtastic.SerialInterface(device_path)
+        # else:
+        #     # Default to auto-discovery
+        #     self.interface = meshtastic.SerialInterface()
     
     def send_message(self, message: str) -> bool:
         """
