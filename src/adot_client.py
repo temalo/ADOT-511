@@ -66,3 +66,43 @@ class ADOTClient:
         except requests.exceptions.RequestException as e:
             logger.error(f"Error fetching road conditions: {e}")
             return []
+    
+    def get_alerts(self) -> List[Dict]:
+        """
+        Fetch current alerts from ADOT 511 API
+        
+        Returns:
+            List of alert dictionaries containing alert information
+        """
+        try:
+            endpoint = f"{self.base_url}/get/alerts"
+            logger.info(f"Fetching alerts from {endpoint}")
+            
+            response = self.session.get(endpoint)
+            response.raise_for_status()
+            
+            data = response.json()
+            
+            # Handle different possible response structures
+            if isinstance(data, dict):
+                # If response is wrapped in a container object
+                alerts = data.get('alerts', data.get('data', []))
+            elif isinstance(data, list):
+                # If response is directly a list of alerts
+                alerts = data
+            else:
+                logger.warning(f"Unexpected response format: {type(data)}")
+                alerts = []
+            
+            logger.info(f"Retrieved {len(alerts)} alerts")
+            return alerts
+            
+        except requests.exceptions.HTTPError as e:
+            logger.error(f"HTTP error fetching alerts: {e.response.status_code} - {e}")
+            return []
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Error fetching alerts: {e}")
+            return []
+        except ValueError as e:
+            logger.error(f"Error parsing alert response JSON: {e}")
+            return []

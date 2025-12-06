@@ -5,9 +5,16 @@ A Python project for interfacing with the Arizona Department of Transportation (
 ## Overview
 
 This project provides scripts to:
-- Fetch real-time traffic and road condition data from the ADOT 511 API
+- Fetch real-time alerts, incidents, and road condition data from the ADOT 511 API
 - Process and format the data
 - Send relevant alerts and updates to Meshtastic mesh network devices
+
+## Features
+
+- **ADOT 511 API Integration**: Retrieves current alerts and traffic incidents
+- **Meshtastic Communication**: Supports both serial and TCP connections
+- **Configurable Channels**: Send messages to specific Meshtastic channels
+- **Automated Alerts**: Formats and distributes traffic information to mesh networks
 
 ## Setup
 

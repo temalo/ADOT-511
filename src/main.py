@@ -44,9 +44,21 @@ def main():
         
         # Fetch data from ADOT API
         logger.info("Fetching data from ADOT 511 API...")
+        
+        # Fetch alerts
+        alerts = adot_client.get_alerts()
+        
+        # Fetch incidents
         incidents = adot_client.get_incidents()
         
-        # Process and send to Meshtastic
+        # Process and send alerts to Meshtastic
+        if alerts:
+            logger.info(f"Found {len(alerts)} alerts")
+            mesh_sender.send_alerts(alerts)
+        else:
+            logger.info("No alerts found")
+        
+        # Process and send incidents to Meshtastic
         if incidents:
             logger.info(f"Found {len(incidents)} incidents")
             mesh_sender.send_alerts(incidents)
