@@ -1,0 +1,11 @@
+# ADOT API and HTTP requests
+requests>=2.31.0
+
+# Meshtastic communication
+meshtastic>=2.2.0
+
+# Configuration management
+python-dotenv>=1.0.0
+
+# Data processing
+python-dateutil>=2.8.2
