@@ -12,6 +12,8 @@ logger = logging.getLogger(__name__)
 class MeshtasticSender:
     """Client for sending messages to Meshtastic devices"""
     
+    MAX_MESSAGE_LENGTH = 200  # Maximum message length for Meshtastic
+    
     def __init__(
         self, 
         device_path: str = None, 
@@ -51,13 +53,21 @@ class MeshtasticSender:
         Send a message to the Meshtastic network
         
         Args:
-            message: Text message to send
+            message: Text message to send (will be truncated to 200 characters)
             channel_index: Optional channel index to override default channel
             
         Returns:
             True if successful, False otherwise
         """
         try:
+            # Enforce maximum message length
+            if len(message) > self.MAX_MESSAGE_LENGTH:
+                original_length = len(message)
+                message = message[:self.MAX_MESSAGE_LENGTH]
+                logger.warning(
+                    f"Message truncated from {original_length} to {self.MAX_MESSAGE_LENGTH} characters"
+                )
+            
             channel = channel_index if channel_index is not None else self.channel_index
             logger.info(f"Sending message on channel {channel}: {message[:50]}...")
             

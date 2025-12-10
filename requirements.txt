@@ -9,3 +9,9 @@ python-dotenv>=1.0.0
 
 # Data processing
 python-dateutil>=2.8.2
+
+# Geocoding for address lookup
+geopy>=2.4.0
+
+# Timezone data (required for Windows)
+tzdata

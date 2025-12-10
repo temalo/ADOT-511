@@ -17,13 +17,49 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
+def _format_accident_message(accident: dict) -> str:
+    """
+    Format an accident dictionary into a concise message for Meshtastic
+    
+    Args:
+        accident: Accident data dictionary
+        
+    Returns:
+        Formatted message string (will be truncated to 200 chars by sender)
+    """
+    roadway = accident.get('RoadwayName', 'Unknown road')
+    direction = accident.get('DirectionOfTravel', '')
+    lanes = accident.get('LanesAffected', '')
+    location = accident.get('Location', '')
+    
+    # Build compact message
+    parts = [f"ACCIDENT: {roadway}"]
+    
+    if direction:
+        parts.append(f"({direction})")
+    
+    if lanes and lanes != "No Data":
+        parts.append(f"Lanes: {lanes}")
+    
+    if location:
+        parts.append(f"@ {location}")
+    
+    return " ".join(parts)
+
+
 def main():
     """Main execution function"""
     logger.info("Starting ADOT 511 to Meshtastic integration")
     
     try:
+        # Get API key from environment variable
+        adot_api_key = os.getenv("ADOT_API_KEY")
+        if not adot_api_key:
+            logger.error("ADOT_API_KEY environment variable not set")
+            raise ValueError("ADOT_API_KEY is required")
+        
         # Initialize ADOT API client
-        adot_client = ADOTClient()
+        adot_client = ADOTClient(api_key=adot_api_key)
         
         # Get Meshtastic connection settings from environment variables
         connection_type = os.getenv("MESHTASTIC_CONNECTION_TYPE", "serial")
@@ -45,25 +81,18 @@ def main():
         # Fetch data from ADOT API
         logger.info("Fetching data from ADOT 511 API...")
         
-        # Fetch alerts
-        alerts = adot_client.get_alerts()
+        # Fetch accidents
+        accidents = adot_client.get_accidents()
         
-        # Fetch incidents
-        incidents = adot_client.get_incidents()
-        
-        # Process and send alerts to Meshtastic
-        if alerts:
-            logger.info(f"Found {len(alerts)} alerts")
-            mesh_sender.send_alerts(alerts)
+        # Process and send accidents to Meshtastic
+        if accidents:
+            logger.info(f"Found {len(accidents)} accidents")
+            for accident in accidents:
+                # Format accident message
+                message = _format_accident_message(accident)
+                mesh_sender.send_message(message)
         else:
-            logger.info("No alerts found")
-        
-        # Process and send incidents to Meshtastic
-        if incidents:
-            logger.info(f"Found {len(incidents)} incidents")
-            mesh_sender.send_alerts(incidents)
-        else:
-            logger.info("No incidents found")
+            logger.info("No accidents found")
             
     except Exception as e:
         logger.error(f"Error in main execution: {e}", exc_info=True)
