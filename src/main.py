@@ -183,7 +183,27 @@ def main():
                 logger.info(f"Found {len(accidents)} accidents")
                 if not enable_send:
                     print(f"[DEBUG] Processing {len(accidents)} accidents...\n")
+                
+                # Track seen accidents to avoid duplicates
+                seen_accidents = set()
+                processed_count = 0
+                
                 for accident in accidents:
+                    # Create unique key from accident details
+                    accident_key = (
+                        accident.get('RoadwayName', ''),
+                        accident.get('DirectionOfTravel', ''),
+                        accident.get('Location', ''),
+                        accident.get('LastUpdated', '')
+                    )
+                    
+                    # Skip if we've already seen this accident
+                    if accident_key in seen_accidents:
+                        continue
+                    
+                    seen_accidents.add(accident_key)
+                    processed_count += 1
+                    
                     # Format accident message
                     message = _format_accident_message(accident)
                     
@@ -196,21 +216,50 @@ def main():
                         print(f"\n{'='*60}")
                         print(f"{message}")
                         print(f"{'='*60}\n")
+                
+                if not enable_send and len(accidents) != processed_count:
+                    print(f"[DEBUG] Skipped {len(accidents) - processed_count} duplicate accidents")
             else:
                 logger.info("No accidents found")
         elif search_type == 'events':
             # Fetch all events
             events = adot_client.get_events(location=location)
             
+            # Filter out accidents and incidents (use 'accidents' search type for those)
+            non_accident_events = [
+                event for event in events 
+                if 'accident' not in event.get('EventType', '').lower()
+            ]
+            
             if not enable_send:
-                print(f"[DEBUG] Retrieved {len(events)} events")
+                print(f"[DEBUG] Retrieved {len(non_accident_events)} events (filtered out {len(events) - len(non_accident_events)} accidents)")
             
             # Process and send events to Meshtastic
-            if events:
-                logger.info(f"Found {len(events)} events")
+            if non_accident_events:
+                logger.info(f"Found {len(non_accident_events)} events")
                 if not enable_send:
-                    print(f"[DEBUG] Processing {len(events)} events...\n")
-                for event in events:
+                    print(f"[DEBUG] Processing {len(non_accident_events)} events...\n")
+                
+                # Track seen events to avoid duplicates
+                seen_events = set()
+                processed_count = 0
+                
+                for event in non_accident_events:
+                    # Create unique key from event details
+                    event_key = (
+                        event.get('RoadwayName', ''),
+                        event.get('EventType', ''),
+                        event.get('DirectionOfTravel', ''),
+                        event.get('Location', '')
+                    )
+                    
+                    # Skip if we've already seen this event
+                    if event_key in seen_events:
+                        continue
+                    
+                    seen_events.add(event_key)
+                    processed_count += 1
+                    
                     # Format event message
                     roadway = event.get('RoadwayName', 'Unknown road')
                     event_type = event.get('EventType', 'Event')
@@ -232,6 +281,9 @@ def main():
                         print(f"\n{'='*60}")
                         print(f"{message}")
                         print(f"{'='*60}\n")
+                
+                if not enable_send and len(non_accident_events) != processed_count:
+                    print(f"[DEBUG] Skipped {len(non_accident_events) - processed_count} duplicate events")
             else:
                 logger.info("No events found")
         elif search_type == 'alerts':
