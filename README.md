@@ -51,13 +51,51 @@ MESHTASTIC_CHANNEL_INDEX=0  # Default is 0 (primary channel)
 ```
 
 ### ADOT API Configuration
-Add your ADOT API credentials as needed.
+```bash
+ADOT_API_KEY=your_api_key_here  # Required: Your ADOT 511 API key
+```
+
+### Debug Mode
+```bash
+ENABLE_MESHTASTIC_SEND=false  # Set to 'true' to enable Meshtastic sending, 'false' for debug mode (default: false)
+```
 
 ## Usage
 
+Run the application with optional command-line parameters:
+
 ```bash
-python src/main.py
+python src/main.py [search_type] [location]
 ```
+
+### Parameters
+
+- **search_type** (optional): Type of data to search for
+  - Options: `accidents`, `alerts`, `weather`
+  - Default: `accidents`
+  - Case-insensitive
+  
+- **location** (optional): Location to search
+  - Default: `phoenix`
+  - Case-insensitive
+
+### Examples
+
+```bash
+# Use default parameters (accidents in Phoenix)
+python src/main.py
+
+# Search for accidents in Tucson
+python src/main.py accidents tucson
+
+# Search for weather in Phoenix (case-insensitive)
+python src/main.py WEATHER Phoenix
+
+# Search for alerts in Flagstaff
+python src/main.py alerts flagstaff
+```
+
+**Note:** Currently only the `accidents` search type is fully implemented. The `alerts` and `weather` options are placeholders for future functionality.
 
 ## Project Structure
 

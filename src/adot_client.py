@@ -30,9 +30,13 @@ class ADOTClient:
         self.session = requests.Session()
         self.geocoder = Nominatim(user_agent="adot-511-client")
     
-    def get_events(self) -> List[Dict]:
+    def get_events(self, location: Optional[str] = None) -> List[Dict]:
         """
         Fetch current traffic events (incidents, roadwork, closures, accidents)
+        
+        Args:
+            location: Optional location filter (case-insensitive, partial match)
+                     Searches in RoadwayName, Description, and Location fields
         
         Returns:
             List of event dictionaries containing traffic events
@@ -50,6 +54,25 @@ class ADOTClient:
             response.raise_for_status()
             
             data = response.json()
+            
+            # Filter events by location if specified
+            if location:
+                location_lower = location.lower()
+                filtered_events = []
+                for event in data:
+                    # Check if location appears in RoadwayName, Description, or Location
+                    roadway = (event.get('RoadwayName') or '').lower()
+                    description = (event.get('Description') or '').lower()
+                    location_field = (event.get('Location') or '').lower()
+                    
+                    if (location_lower in roadway or 
+                        location_lower in description or 
+                        location_lower in location_field):
+                        filtered_events.append(event)
+                
+                logger.info(f"Retrieved {len(data)} events, {len(filtered_events)} match location filter '{location}'")
+                return filtered_events
+            
             logger.info(f"Retrieved {len(data)} events")
             return data
             
@@ -137,9 +160,13 @@ class ADOTClient:
             logger.error(f"Error parsing alert response JSON: {e}")
             return []
     
-    def get_accidents(self) -> List[Dict]:
+    def get_accidents(self, location: Optional[str] = None) -> List[Dict]:
         """
         Fetch accident events from ADOT 511 API
+        
+        Args:
+            location: Optional location filter (case-insensitive, partial match)
+                     Searches in RoadwayName, Description, and Location fields
         
         Returns:
             List of accident dictionaries with selected fields:
@@ -153,8 +180,8 @@ class ADOTClient:
             - LastUpdated (converted to Arizona local time)
         """
         try:
-            # Get all events
-            events = self.get_events()
+            # Get all events (filtered by location if specified)
+            events = self.get_events(location=location)
             
             # Filter for accidents and extract specific fields
             accidents = []
