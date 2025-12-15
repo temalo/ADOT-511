@@ -100,7 +100,7 @@ def main():
         'search_type',
         nargs='?',
         default='accidents',
-        help='Type of data to search for: accidents, events, alerts, or weather (default: accidents)'
+        help='Type of data to search for: accidents, events, alerts, weather, or listen (default: accidents)'
     )
     parser.add_argument(
         'location',
@@ -120,9 +120,50 @@ def main():
         location = None
     
     # Validate search type
-    valid_search_types = ['accidents', 'events', 'alerts', 'weather']
+    valid_search_types = ['accidents', 'events', 'alerts', 'weather', 'listen']
     if search_type not in valid_search_types:
         logger.error(f"Invalid search type '{search_type}'. Must be one of: {', '.join(valid_search_types)}")
+        return
+    
+    # Handle listen mode
+    if search_type == 'listen':
+        # Enable debug logging for listener mode
+        logging.getLogger().setLevel(logging.DEBUG)
+        
+        # Suppress noisy library debug messages
+        logging.getLogger('urllib3').setLevel(logging.WARNING)
+        logging.getLogger('meshtastic').setLevel(logging.WARNING)
+        
+        logger.info("Starting Meshtastic listener mode...")
+        from meshtastic_listener import MeshtasticListener
+        
+        # Get API key from environment variable
+        adot_api_key = os.getenv("ADOT_API_KEY")
+        if not adot_api_key:
+            logger.error("ADOT_API_KEY environment variable not set")
+            raise ValueError("ADOT_API_KEY is required")
+        
+        # Get Meshtastic connection settings from environment variables
+        connection_type = os.getenv("MESHTASTIC_CONNECTION_TYPE", "serial")
+        device_path = os.getenv("MESHTASTIC_DEVICE_PATH")
+        tcp_host = os.getenv("MESHTASTIC_TCP_HOST")
+        tcp_port = int(os.getenv("MESHTASTIC_TCP_PORT", "4403"))
+        channel_index = int(os.getenv("MESHTASTIC_CHANNEL_INDEX", "0"))
+        max_results = int(os.getenv("MAX_RESULTS_PER_QUERY", "3"))
+        
+        # Initialize and start listener
+        listener = MeshtasticListener(
+            adot_api_key=adot_api_key,
+            device_path=device_path,
+            tcp_host=tcp_host,
+            tcp_port=tcp_port,
+            connection_type=connection_type,
+            channel_index=channel_index,
+            max_results=max_results
+        )
+        
+        # Start listening (this will block until interrupted)
+        listener.start()
         return
     
     logger.info(f"Starting ADOT 511 to Meshtastic integration - Search Type: {search_type}, Location: {location if location else 'all'}")
