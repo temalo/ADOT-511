@@ -39,47 +39,124 @@ class MeshtasticSender:
         self.channel_index = channel_index
         self.interface = None
         
-        # TODO: Initialize meshtastic interface based on connection type
-        # if connection_type == "tcp" and tcp_host:
-        #     self.interface = meshtastic.TCPInterface(hostname=tcp_host, portNumber=tcp_port)
-        # elif connection_type == "serial" and device_path:
-        #     self.interface = meshtastic.SerialInterface(device_path)
+        # Initialize meshtastic interface based on connection type
+        if connection_type == "tcp" and tcp_host:
+            import meshtastic.tcp_interface
+            self.interface = meshtastic.tcp_interface.TCPInterface(hostname=tcp_host, portNumber=tcp_port)
+        elif connection_type == "serial" and device_path:
+            import meshtastic.serial_interface
+            self.interface = meshtastic.serial_interface.SerialInterface(devPath=device_path)
         # else:
         #     # Default to auto-discovery
-        #     self.interface = meshtastic.SerialInterface()
+        #     import meshtastic.serial_interface
+        #     self.interface = meshtastic.serial_interface.SerialInterface()
     
     def send_message(self, message: str, channel_index: Optional[int] = None) -> bool:
         """
         Send a message to the Meshtastic network
+        Automatically splits messages longer than 200 characters
         
         Args:
-            message: Text message to send (will be truncated to 200 characters)
+            message: Text message to send
             channel_index: Optional channel index to override default channel
             
         Returns:
             True if successful, False otherwise
         """
         try:
-            # Enforce maximum message length
-            if len(message) > self.MAX_MESSAGE_LENGTH:
-                original_length = len(message)
-                message = message[:self.MAX_MESSAGE_LENGTH]
-                logger.warning(
-                    f"Message truncated from {original_length} to {self.MAX_MESSAGE_LENGTH} characters"
-                )
-            
             channel = channel_index if channel_index is not None else self.channel_index
-            logger.info(f"Sending message on channel {channel}: {message[:50]}...")
             
-            # TODO: Implement actual Meshtastic sending
-            # self.interface.sendText(message, channelIndex=channel)
-            
-            logger.info("Message sent successfully")
-            return True
+            # Split message if it exceeds maximum length
+            if len(message) > self.MAX_MESSAGE_LENGTH:
+                logger.info(f"Message length {len(message)} exceeds {self.MAX_MESSAGE_LENGTH}, splitting into parts")
+                messages = self._split_message(message, self.MAX_MESSAGE_LENGTH)
+                
+                # Send each part
+                for i, msg_part in enumerate(messages, 1):
+                    logger.info(f"Sending part {i}/{len(messages)} on channel {channel}: {msg_part[:50]}...")
+                    if self.interface:
+                        try:
+                            result = self.interface.sendText(msg_part, channelIndex=channel)
+                            logger.info(f"Part {i}/{len(messages)} sent successfully (ID: {result.id})")
+                            # Give time for each part to transmit before sending the next
+                            import time
+                            time.sleep(0.5)
+                        except Exception as e:
+                            logger.error(f"Error sending part {i}: {e}")
+                    else:
+                        logger.warning("No Meshtastic interface available, message not sent")
+                
+                return True
+            else:
+                # Send single message
+                logger.info(f"Sending message on channel {channel}: {message[:50]}...")
+                logger.debug(f"Interface object: {self.interface}")
+                logger.debug(f"Interface type: {type(self.interface)}")
+                
+                if self.interface:
+                    try:
+                        result = self.interface.sendText(message, channelIndex=channel)
+                        logger.info(f"Message sent successfully (ID: {result.id})")
+                        # Give time for the message to actually transmit over the TCP connection
+                        import time
+                        time.sleep(0.5)
+                    except Exception as e:
+                        logger.error(f"Error during sendText: {e}")
+                        return False
+                else:
+                    logger.warning("No Meshtastic interface available, message not sent")
+                
+                return True
             
         except Exception as e:
             logger.error(f"Error sending message: {e}")
             return False
+    
+    def _split_message(self, message: str, max_length: int) -> List[str]:
+        """
+        Split a long message into multiple messages at logical breakpoints
+        
+        Args:
+            message: Message to split
+            max_length: Maximum length per message
+            
+        Returns:
+            List of message parts
+        """
+        if len(message) <= max_length:
+            return [message]
+        
+        messages = []
+        remaining = message
+        part_num = 1
+        
+        while remaining:
+            if len(remaining) <= max_length:
+                # Last part
+                messages.append(remaining)
+                break
+            
+            # Find a good break point (space, comma, parenthesis)
+            break_point = max_length
+            
+            # Look for break characters in reverse from max_length
+            for i in range(max_length - 1, max_length // 2, -1):
+                if remaining[i] in [' ', ',', ')', ']', '@', '-']:
+                    break_point = i + 1
+                    break
+            
+            # Extract this part
+            part = remaining[:break_point].rstrip()
+            
+            # Add continuation indicator if not the first part
+            if part_num > 1:
+                part = f"...{part}"
+            
+            messages.append(part)
+            remaining = remaining[break_point:].lstrip()
+            part_num += 1
+        
+        return messages
     
     def send_alerts(self, incidents: List[Dict]) -> None:
         """
