@@ -60,14 +60,22 @@ class ADOTClient:
                 location_lower = location.lower()
                 filtered_events = []
                 for event in data:
-                    # Check if location appears in RoadwayName, Description, or Location
+                    # Check if location appears in RoadwayName or Location field
+                    # Don't search in Description to avoid false matches (e.g., "I-10 near 101" matching "101")
                     roadway = (event.get('RoadwayName') or '').lower()
-                    description = (event.get('Description') or '').lower()
                     location_field = (event.get('Location') or '').lower()
                     
-                    if (location_lower in roadway or 
-                        location_lower in description or 
-                        location_lower in location_field):
+                    # Use word boundary matching for better accuracy
+                    # This prevents "101" from matching "10" in "I-10"
+                    import re
+                    # Escape special regex characters in the search term
+                    location_pattern = re.escape(location_lower)
+                    # Add word boundaries to match whole words/numbers
+                    # \b matches word boundaries (between word and non-word characters)
+                    pattern = r'\b' + location_pattern + r'\b'
+                    
+                    # Only search in RoadwayName and Location fields, NOT Description
+                    if re.search(pattern, roadway) or re.search(pattern, location_field):
                         filtered_events.append(event)
                 
                 logger.info(f"Retrieved {len(data)} events, {len(filtered_events)} match location filter '{location}'")

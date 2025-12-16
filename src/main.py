@@ -133,6 +133,7 @@ def main():
         # Suppress noisy library debug messages
         logging.getLogger('urllib3').setLevel(logging.WARNING)
         logging.getLogger('meshtastic').setLevel(logging.WARNING)
+        logging.getLogger('geopy').setLevel(logging.WARNING)
         
         logger.info("Starting Meshtastic listener mode...")
         from meshtastic_listener import MeshtasticListener

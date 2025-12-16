@@ -159,14 +159,18 @@ When the listener is running, other Meshtastic users on the same channel can sen
 - `events scottsdale` - Find events in Scottsdale
 - `events i8` - Find events on Interstate 8 (normalized to I-8)
 
-**Note:** Interstate highway names are automatically normalized for consistency. Whether you send `I10`, `i10`, `I-10`, or `i-10`, the system treats them all as `I-10`.
+**Important Notes:**
+- **Interstate highway names** are automatically normalized for consistency. Whether you send `I10`, `i10`, `I-10`, or `i-10`, the system treats them all as `I-10`.
+- **Location matching uses word boundaries** to prevent false matches. Searching for "101" will only match "101-LOOP" or "SR-101", not "I-10".
+- **Search scope**: Location filtering searches in RoadwayName and Location fields only (not Description) to avoid false positives. For example, searching "101" won't return I-10 accidents that happen to mention "near 101-loop" in their description.
 
 The listener will:
 1. Receive the command from the mesh network
 2. Query the ADOT 511 API for matching incidents
-3. Format each result with location, direction, and time information
-4. Send up to 3 results (configurable via `MAX_RESULTS_PER_QUERY`) back to the mesh
-5. Automatically split messages longer than 200 characters at logical breakpoints
+3. Apply intelligent filtering with word boundary matching (prevents "10" from matching "101")
+4. Format each result with location, direction, and time information
+5. Send up to 3 results (configurable via `MAX_RESULTS_PER_QUERY`) back to the mesh with 2-second delays between messages
+6. Automatically split messages longer than 200 characters at logical breakpoints
 
 #### Response Format
 
@@ -219,10 +223,11 @@ These test modes allow you to:
 4. **Command Parsing**: Matches incoming messages against the pattern `<command> <location>`
 5. **Location Normalization**: Automatically normalizes interstate highway names (I10 → I-10, i17 → I-17)
 6. **API Query**: Fetches real-time data from ADOT 511 API based on the command
-7. **Geocoding**: Converts coordinates to readable addresses (cached for performance)
-8. **Formatting**: Formats results with clear location, direction, and timing information
-9. **Message Splitting**: Automatically splits long messages at logical breakpoints (spaces, commas, parentheses)
-10. **Transmission**: Sends formatted responses back to the mesh network with 0.5s delays between messages
+7. **Smart Filtering**: Uses word boundary regex matching on RoadwayName and Location fields only (not Description) to prevent false positives
+8. **Geocoding**: Converts coordinates to readable addresses (cached for performance)
+9. **Formatting**: Formats results with clear location, direction, and timing information
+10. **Message Splitting**: Automatically splits long messages at logical breakpoints (spaces, commas, parentheses)
+11. **Transmission**: Sends formatted responses back to the mesh network with 2-second delays between messages to prevent network collisions
 
 #### Message Length Handling
 
@@ -357,9 +362,12 @@ See `requirements.txt` for complete list.
 - **Pubsub Pattern**: Uses pubsub library for Meshtastic message callbacks
 - **Regex Matching**: Commands parsed with pattern `^\s*(accidents|events|alerts|weather)\s+(.+?)\s*$`
 - **Interstate Normalization**: Automatically converts `I10`, `i10`, `I-10` (any case, with/without dash) to standard `I-10` format
+- **Word Boundary Filtering**: Uses `\b` regex boundaries to match complete words/numbers (prevents "10" from matching "101")
+- **Selective Field Search**: Searches only RoadwayName and Location fields, excluding Description to avoid false positives
 - **Geocoding Provider**: OpenStreetMap Nominatim (1 second rate limit)
 - **Timezone**: Arizona time (America/Phoenix) for elapsed time calculations
 - **Message Priority**: All sent messages use RELIABLE priority
+- **Message Spacing**: 2-second delay between messages to prevent Meshtastic network collisions
 - **Auto-reconnect**: TCP socket reconnects automatically if disconnected
 
 ## License

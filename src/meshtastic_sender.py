@@ -79,8 +79,9 @@ class MeshtasticSender:
                             result = self.interface.sendText(msg_part, channelIndex=channel)
                             logger.info(f"Part {i}/{len(messages)} sent successfully (ID: {result.id})")
                             # Give time for each part to transmit before sending the next
+                            # Meshtastic needs significant time between messages to avoid collisions
                             import time
-                            time.sleep(0.5)
+                            time.sleep(2.0)
                         except Exception as e:
                             logger.error(f"Error sending part {i}: {e}")
                     else:
@@ -98,8 +99,9 @@ class MeshtasticSender:
                         result = self.interface.sendText(message, channelIndex=channel)
                         logger.info(f"Message sent successfully (ID: {result.id})")
                         # Give time for the message to actually transmit over the TCP connection
+                        # Meshtastic needs significant time between messages to avoid collisions
                         import time
-                        time.sleep(0.5)
+                        time.sleep(2.0)
                     except Exception as e:
                         logger.error(f"Error during sendText: {e}")
                         return False
