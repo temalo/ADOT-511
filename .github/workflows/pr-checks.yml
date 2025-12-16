@@ -26,7 +26,7 @@ jobs:
       
       - name: Verify Python syntax
         run: |
-          python -m py_compile src/*.py
+          find src -name '*.py' -type f -exec python -m py_compile {} \;
       
       - name: PR merge capability check
         run: echo "✓ Pull request is ready for merge capability evaluation"
