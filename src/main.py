@@ -261,7 +261,14 @@ def main():
                 if not enable_send and len(accidents) != processed_count:
                     print(f"[DEBUG] Skipped {len(accidents) - processed_count} duplicate accidents")
             else:
-                logger.info("No accidents found")
+                message = "No accidents found"
+                logger.info(message)
+                if enable_send:
+                    mesh_sender.send_message(message)
+                else:
+                    print(f"\n{'='*60}")
+                    print(f"{message}")
+                    print(f"{'='*60}\n")
         elif search_type == 'events':
             # Fetch all events
             events = adot_client.get_events(location=location)
@@ -326,7 +333,14 @@ def main():
                 if not enable_send and len(non_accident_events) != processed_count:
                     print(f"[DEBUG] Skipped {len(non_accident_events) - processed_count} duplicate events")
             else:
-                logger.info("No events found")
+                message = "No events found"
+                logger.info(message)
+                if enable_send:
+                    mesh_sender.send_message(message)
+                else:
+                    print(f"\n{'='*60}")
+                    print(f"{message}")
+                    print(f"{'='*60}\n")
         elif search_type == 'alerts':
             logger.info("Alerts search not yet implemented")
             print("[INFO] Alerts search not yet implemented")
