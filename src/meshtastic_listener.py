@@ -9,8 +9,8 @@ import os
 from typing import Optional, Callable
 from datetime import datetime
 from zoneinfo import ZoneInfo
-from adot_client import ADOTClient
-from meshtastic_sender import MeshtasticSender
+from .adot_client import ADOTClient
+from .meshtastic_sender import MeshtasticSender
 
 logger = logging.getLogger(__name__)
 

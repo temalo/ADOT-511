@@ -9,8 +9,8 @@ import os
 from datetime import datetime
 from zoneinfo import ZoneInfo
 from dotenv import load_dotenv
-from adot_client import ADOTClient
-from meshtastic_sender import MeshtasticSender
+from .adot_client import ADOTClient
+from .meshtastic_sender import MeshtasticSender
 
 # Load environment variables from .env file
 load_dotenv()
@@ -136,7 +136,7 @@ def main():
         logging.getLogger('geopy').setLevel(logging.WARNING)
         
         logger.info("Starting Meshtastic listener mode...")
-        from meshtastic_listener import MeshtasticListener
+        from .meshtastic_listener import MeshtasticListener
         
         # Get API key from environment variable
         adot_api_key = os.getenv("ADOT_API_KEY")
